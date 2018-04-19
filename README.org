@@ -44,7 +44,7 @@ struct1:f2 -> struct3:here
 }
   #+END_SRC
 
-  [[file:tests/html1-correct.png][file:~/devin/projects/emacs-gv-library/tests/html1-correct.png]]
+  [[file:tests/html1-correct.png]]
 
 ** Grammar
    Tokens with question marks in the grammar are optional.  Ellipses indicate
