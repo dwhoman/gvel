@@ -1,0 +1,79 @@
+* Emacs Graphing with gvel
+  gvel is an interface between Emacs Lisp and Graphviz using an s-expression based grammar.
+
+  #+BEGIN_SRC emacs-lisp
+(gvel-tree->dot
+ '(structs t nil
+	   (((shape . plaintext)) node)
+	   (node struct1
+		 (((label . (table :border "0" :cellborder "1" :cellspacing "0"
+				   (tr
+				    (td "left")
+				    (td :port "f1" "mid dle")
+				    (td :port "f2" "right")))))))
+	   (node struct2
+		 (((label . (table :border "0" :cellborder "1" :cellspacing "0"
+				   (tr
+				    (td :port "f0" "one")
+				    (td "two")))))))
+	   (node struct3
+		 (((label . (table :border "0" :cellborder "1" :cellspacing "0" :cellpadding "4"
+				   (tr
+				    (td :rowspan "3" "hello" (br) "world")
+				    (td :colspan "3" "b")
+				    (td :rowspan "3" "g")
+				    (td :rowspan "3" "h"))
+				   (tr
+				    (td "c")
+				    (td :port "here" "d")
+				    (td "e"))
+				   (tr
+				    (td :colspan "3" "f")))))))
+	   (edge [struct1:f1 struct2:f0])
+	   (edge [struct1:f2 struct3:here])))
+  #+end_SRC
+
+  #+BEGIN_SRC dot
+digraph "structs" {
+ node [shape="plaintext"]
+struct1  [label=<<table border="0" cellborder="1" cellspacing="0"><tr><td>left</td><td port="f1">mid dle</td><td port="f2">right</td></tr></table>>] 
+struct2  [label=<<table border="0" cellborder="1" cellspacing="0"><tr><td port="f0">one</td><td>two</td></tr></table>>] 
+struct3  [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4"><tr><td rowspan="3">hello<br/>world</td><td colspan="3">b</td><td rowspan="3">g</td><td rowspan="3">h</td></tr><tr><td>c</td><td port="here">d</td><td>e</td></tr><tr><td colspan="3">f</td></tr></table>>] 
+struct1:f1 -> struct2:f0
+struct1:f2 -> struct3:here
+}
+  #+END_SRC
+
+  [[file:tests/html1-correct.png][file:~/devin/projects/emacs-gv-library/tests/html1-correct.png]]
+
+** Grammar
+   Tokens with question marks in the grammar are optional.  Ellipses indicate
+   omitted arguments for sake of brevity.  Star indicates zero or more copies,
+   and vertical bar indicates a choice.
+   #+BEGIN_EXAMPLE
+(NAME? DIRECTEDP? STRICTP?
+  (((ATTR . VALUE)...) KIND? (graph|node|edge ...)*)*
+  (graph NAME?
+    (node ...)*
+    (edge ...)*
+    (((ATTR . VALUE)...) KIND? (graph|node|edge ...)*)*
+  (node NAME
+    (((ATTR . VALUE)*))*)
+  (edge [FROM TO...]
+     (((ATTR . VALUE)*))*)*))
+   #+END_EXAMPLE
+   - graph, node, edge are symbols
+   - KIND is a symbol, one of: node, graph, edge, or nil
+     - the default kind is graph
+   - NAME is a symbol or string
+   - DIRECTEDP is t or nil, which get mapped to directed and undirected
+   - ATTR is a symbol or a string
+   - VALUE is:
+     - symbol, number, or string get mapped to values
+     - t, nil mapped to true, false
+     - empty string mapped to empty string
+     - a list, sent xmlgen HTML
+     - an array is a record
+   - FROM and TO is a NAME or a graph
+   - graph, node, and edge names must be quoted if they contain symbols that
+     have to be quoted in Graphviz
